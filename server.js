@@ -59,6 +59,8 @@ app.post('/chat', async (req, res) => {
       temperature: 0.7
     });
 
+    console.log('Model used:', resp.model);
+    
     const reply = resp.choices?.[0]?.message?.content || '(no reply)';
     saveMsg(userId, 'user', message);
     saveMsg(userId, 'assistant', reply);
