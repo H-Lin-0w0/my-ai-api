@@ -7,13 +7,20 @@
     <style>
       body { font: 15px system-ui, sans-serif; margin: 16px; }
       #log { height: 60vh; overflow: auto; border: 1px solid #eee; border-radius: 12px; padding: 10px; background:#fafafa;}
-      .me{ text-align:right } .me span{ background:#111; color:#fff }
+      .me{ text-align:right } 
+      .me span{ background:#111; color:#fff }
       .bot span{ background:#fff; border:1px solid #eee }
       .me span, .bot span{ display:inline-block; padding:8px 12px; border-radius:14px; margin:6px 0; max-width:70ch; white-space:pre-wrap }
       #bar{ display:flex; gap:8px; margin-top:10px }
       textarea{ flex:1; height:80px; padding:10px; border-radius:12px; border:1px solid #ddd; resize:none }
       button{ padding:10px 16px; border-radius:12px; border:0; background:#111; color:#fff }
+      /* optional code style */
+      code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+      pre { background:#f6f6f6; padding:10px; border-radius:10px; overflow:auto; }
     </style>
+    <!-- markdown + sanitize -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.8/dist/purify.min.js"></script>
   </head>
   <body>
     <h1>My Cheap ChatGPT 🐥</h1>
@@ -28,10 +35,27 @@
       const inp = document.getElementById('inp');
       const btn = document.getElementById('send');
 
+      // turn markdown into sanitized HTML
+      function renderMarkdown(md) {
+        const raw = marked.parse(String(md ?? ""), { breaks: true });
+        return DOMPurify.sanitize(raw, { USE_PROFILES: { html: true } });
+      }
+
+      // push messages to UI with markdown support
       function push(role, content){
         const div = document.createElement('div');
         div.className = role === 'user' ? 'me' : 'bot';
-        div.innerHTML = `<span>${String(content).replace(/</g,'&lt;')}</span>`;
+
+        const bubble = document.createElement('span');
+        bubble.innerHTML = renderMarkdown(content);
+
+        // optional: links open in new tab
+        bubble.querySelectorAll('a').forEach(a=>{
+          a.target = '_blank';
+          a.rel = 'noopener noreferrer';
+        });
+
+        div.appendChild(bubble);
         log.appendChild(div);
         log.scrollTop = log.scrollHeight;
       }
