@@ -1,0 +1,67 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>My Cheap ChatGPT 🐥</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      body { font: 15px system-ui, sans-serif; margin: 16px; }
+      #log { height: 60vh; overflow: auto; border: 1px solid #eee; border-radius: 12px; padding: 10px; background:#fafafa;}
+      .me{ text-align:right } .me span{ background:#111; color:#fff }
+      .bot span{ background:#fff; border:1px solid #eee }
+      .me span, .bot span{ display:inline-block; padding:8px 12px; border-radius:14px; margin:6px 0; max-width:70ch; white-space:pre-wrap }
+      #bar{ display:flex; gap:8px; margin-top:10px }
+      textarea{ flex:1; height:80px; padding:10px; border-radius:12px; border:1px solid #ddd; resize:none }
+      button{ padding:10px 16px; border-radius:12px; border:0; background:#111; color:#fff }
+    </style>
+  </head>
+  <body>
+    <h1>My Cheap ChatGPT 🐥</h1>
+    <div id="log"></div>
+    <div id="bar">
+      <textarea id="inp" placeholder="type here… (Enter to send)"></textarea>
+      <button id="send">Send</button>
+    </div>
+
+    <script>
+      const log = document.getElementById('log');
+      const inp = document.getElementById('inp');
+      const btn = document.getElementById('send');
+
+      function push(role, content){
+        const div = document.createElement('div');
+        div.className = role === 'user' ? 'me' : 'bot';
+        div.innerHTML = `<span>${String(content).replace(/</g,'&lt;')}</span>`;
+        log.appendChild(div);
+        log.scrollTop = log.scrollHeight;
+      }
+
+      async function send(){
+        const text = inp.value.trim();
+        if(!text) return;
+        inp.value = '';
+        push('user', text);
+        try{
+          const r = await fetch('/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: 'demo', message: text })
+          });
+          if(!r.ok){
+            const t = await r.text().catch(()=>'(no body)');
+            throw new Error(`HTTP ${r.status} ${r.statusText} — ${t.slice(0,300)}`);
+          }
+          const data = await r.json();
+          push('assistant', data.reply || '(no reply)');
+        }catch(e){
+          push('assistant', 'error: ' + e);
+        }
+      }
+
+      btn.onclick = send;
+      inp.addEventListener('keydown', e=>{
+        if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); send(); }
+      });
+    </script>
+  </body>
+</html>
